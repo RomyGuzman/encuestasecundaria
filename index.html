@@ -356,14 +356,7 @@
                 alert(idioma === "zh" ? "请选择一个选项" : idioma === "en" ? "Please select an option" : "Por favor selecciona una opción");
                 return;
             }
-            if (seleccion.toLowerCase() === "otro" || seleccion.toLowerCase() === "other" || seleccion === "其他") {
-                let val = document.getElementById(`otroInput${currentQuestion}`).value.trim();
-                if (!val) {
-                    alert(idioma === "zh" ? "请输入你的答案" : idioma === "en" ? "Please enter your answer" : "Por favor escribe tu respuesta");
-                    return;
-                }
-                answers[currentQuestion + 1] = val;
-            }
+            // Ya no se requiere completar texto si se selecciona "otro"
             currentQuestion++;
             renderQuestion();
         }
@@ -375,15 +368,7 @@
                 alert(idioma === "zh" ? "请选择至少一个选项" : idioma === "en" ? "Please select at least one option" : "Selecciona al menos una opción");
                 return;
             }
-            let tieneOtro = arr.some(v => v.toLowerCase() === "otro" || v.toLowerCase() === "other" || v === "其他");
-            if (tieneOtro) {
-                let val = document.getElementById(`otroInput${currentQuestion}`).value.trim();
-                if (!val) {
-                    alert(idioma === "zh" ? "请输入你的答案" : idioma === "en" ? "Please enter your answer" : "Por favor escribe tu respuesta");
-                    return;
-                }
-                answers[currentQuestion + 1] = arr.map(v => (v.toLowerCase() === "otro" || v.toLowerCase() === "other" || v === "其他") ? val : v);
-            }
+            // Ya no se requiere completar texto si se selecciona "otro"
             currentQuestion++;
             renderQuestion();
         }
