@@ -322,17 +322,15 @@
         }
 
         // Selección opción única
-        function seleccionarOpcion(qIdx, optIdx, isOtro) {
+        function seleccionarOpcion(qIdx, optIdx) {
             document.querySelectorAll(`[id^="option_${qIdx}_"]`).forEach(el => el.classList.remove('selected'));
             document.getElementById(`option_${qIdx}_${optIdx}`).classList.add('selected');
             let opt = (idioma === "es" ? questions[qIdx].opciones[optIdx] : traducciones[idioma][qIdx].opciones[optIdx]);
             answers[qIdx + 1] = opt;
-            let otroInput = document.getElementById(`otroInput${qIdx}`);
-            if (otroInput) otroInput.style.display = isOtro ? "block" : "none";
         }
 
         // Selección opción múltiple
-        function seleccionarMultiple(qIdx, optIdx, isOtro) {
+        function seleccionarMultiple(qIdx, optIdx) {
             let el = document.getElementById(`option_${qIdx}_${optIdx}`);
             el.classList.toggle('selected');
             let opt = (idioma === "es" ? questions[qIdx].opciones[optIdx] : traducciones[idioma][qIdx].opciones[optIdx]);
@@ -344,19 +342,16 @@
                 let idx = arr.indexOf(opt);
                 if (idx > -1) arr.splice(idx, 1);
             }
-            let otroInput = document.getElementById(`otroInput${qIdx}`);
-            if (otroInput) otroInput.style.display = isOtro && el.classList.contains('selected') ? "block" : "none";
         }
 
         // Validación y avance opción única
         function nextObligatoria() {
-            let q = idioma === "es" ? questions[currentQuestion] : traducciones[idioma][currentQuestion];
             let seleccion = answers[currentQuestion + 1];
             if (!seleccion) {
                 alert(idioma === "zh" ? "请选择一个选项" : idioma === "en" ? "Please select an option" : "Por favor selecciona una opción");
                 return;
             }
-            // Ya no se requiere completar texto si se selecciona "otro"
+            // Si la opción es "Otro", no requiere texto adicional, avanza como cualquier otra opción
             currentQuestion++;
             renderQuestion();
         }
@@ -368,7 +363,7 @@
                 alert(idioma === "zh" ? "请选择至少一个选项" : idioma === "en" ? "Please select at least one option" : "Selecciona al menos una opción");
                 return;
             }
-            // Ya no se requiere completar texto si se selecciona "otro"
+            // Si se selecciona "Otro", no requiere texto adicional, avanza como cualquier otra opción
             currentQuestion++;
             renderQuestion();
         }
@@ -380,20 +375,16 @@
             if (q.tipo === "opcion" && val) {
                 q.opciones.forEach((opt, i) => {
                     let el = document.getElementById(`option_${currentQuestion}_${i}`);
-                    if (val === opt || (opt.toLowerCase() === "otro" || opt.toLowerCase() === "other" || opt === "其他") && typeof val === "string" && !q.opciones.includes(val)) {
+                    if (val === opt) {
                         el.classList.add('selected');
-                        let otroInput = document.getElementById(`otroInput${currentQuestion}`);
-                        if (otroInput) otroInput.style.display = (opt.toLowerCase() === "otro" || opt.toLowerCase() === "other" || opt === "其他") ? "block" : "none";
                     }
                 });
             }
             if (q.tipo === "multiple" && val) {
                 q.opciones.forEach((opt, i) => {
                     let el = document.getElementById(`option_${currentQuestion}_${i}`);
-                    if (val.includes(opt) || ((opt.toLowerCase() === "otro" || opt.toLowerCase() === "other" || opt === "其他") && val.some(v => !q.opciones.includes(v)))) {
+                    if (val.includes(opt)) {
                         el.classList.add('selected');
-                        let otroInput = document.getElementById(`otroInput${currentQuestion}`);
-                        if (otroInput) otroInput.style.display = (opt.toLowerCase() === "otro" || opt.toLowerCase() === "other" || opt === "其他") ? "block" : "none";
                     }
                 });
             }
