@@ -275,42 +275,61 @@
         document.getElementById("progress").style.width = percent + "%";
     }
 
-    // FINAL FIX: renderQuestion simplificada (sin lógica de salto vieja)
-    function renderQuestion() {
-        if (currentQuestion >= questions.length) {
-            mostrarFinal();
-            return;
-        }
-        updateProgress();
-        let q = questions[currentQuestion];
-        let qTrad = idioma === "es" ? q : traducciones[idioma][currentQuestion];
-        let preguntaSinNumero = qTrad.pregunta.replace(/^\d+\.\s*/, "");
-        let html = `<h2>${preguntaSinNumero}</h2>`;
-
-        if (q.tipo === "opcion") {
-            qTrad.opciones.forEach((opt, i) => {
-                html += `<div class="option" onclick="seleccionarOpcion(${currentQuestion}, ${i})" id="option_${currentQuestion}_${i}">
-                    <label>${opt}</label>
-                </div>`;
-            });
-            html += `<div class="button-group">
-                ${currentQuestion > 0 ? `<button class="back-btn" onclick="volverAtras()">${idioma === "zh" ? "返回" : idioma === "en" ? "Back" : "Atrás"}</button>` : ""}
-                <button onclick="nextObligatoria()">${idioma === "zh" ? "下一步" : idioma === "en" ? "Next" : "Siguiente"}</button>
-            </div>`;
-        } else if (q.tipo === "multiple") {
-            qTrad.opciones.forEach((opt, i) => {
-                html += `<div class="option" onclick="seleccionarMultiple(${currentQuestion}, ${i})" id="option_${currentQuestion}_${i}">
-                    <label>${opt}</label>
-                </div>`;
-            });
-            html += `<div class="button-group">
-                ${currentQuestion > 0 ? `<button class="back-btn" onclick="volverAtras()">${idioma === "zh" ? "返回" : idioma === "en" ? "Back" : "Atrás"}</button>` : ""}
-                <button onclick="nextMultipleObligatoria()">${idioma === "zh" ? "下一步" : idioma === "en" ? "Next" : "Siguiente"}</button>
-            </div>`;
-        }
-        document.getElementById("quiz").innerHTML = html;
-        marcarSeleccion();
+    // FINAL FIX: nextObligatoria (CORREGIDO: chequea === 3, no 4; lógica de salto aquí)
+function nextObligatoria() {
+    let seleccion = answers[currentQuestion + 1];
+    if (!seleccion) {
+        alert(idioma === "zh" ? "请选择一个选项" : idioma === "en" ? "Please select an option" : "Por favor selecciona una opción");
+        return;
     }
+    currentQuestion++;
+    // CORREGIDO: Lógica de salto para pregunta 3 (después de ++, currentQuestion=3 si venía de 2)
+    if (currentQuestion === 3 && answers[3] === (idioma === "es" ? "No" : idioma === "en" ? "No" : "否")) {
+        currentQuestion = 16;  // Salta a pregunta 17
+    }
+    // Si "Sí" en 3 y llega a 16 (después de completar 4-16), termina
+    if (answers[3] === (idioma === "es" ? "Sí" : idioma === "en" ? "Yes" : "是") && currentQuestion === 16) {
+        mostrarFinal();
+        return;
+    }
+    if (currentQuestion >= questions.length) {
+        mostrarFinal();
+        return;
+    }
+    renderQuestion();
+}
+
+// FINAL FIX: nextMultipleObligatoria (sin cambios, ya que no aplica salto de preg 3)
+function nextMultipleObligatoria() {
+    let arr = answers[currentQuestion + 1];
+    if (!arr || arr.length === 0) {
+        alert(idioma === "zh" ? "请选择至少一个选项" : idioma === "en" ? "Please select at least one option" : "Selecciona al menos una opción");
+        return;
+    }
+    currentQuestion++;
+    // CORREGIDO: Agregar chequeo para si llega a 16 con "Sí" en 3 (por si hay multiples después)
+    if (answers[3] === (idioma === "es" ? "Sí" : idioma === "en" ? "Yes" : "是") && currentQuestion === 16) {
+        mostrarFinal();
+        return;
+    }
+    if (currentQuestion >= questions.length) {
+        mostrarFinal();
+        return;
+    }
+    renderQuestion();
+}
+
+// FIX: volverAtras (CORREGIDO: vuelve a 2 si fue "No" en 3)
+function volverAtras() {
+    // Si está en 16 y respuesta 3 fue "No", vuelve a 2 (pregunta 3)
+    if (currentQuestion === 16 && answers[3] === (idioma === "es" ? "No" : idioma === "en" ? "No" : "否")) {
+        currentQuestion = 2;  // CORREGIDO: A índice 2 (preg 3)
+    } else {
+        currentQuestion = Math.max(0, currentQuestion - 1);
+    }
+    renderQuestion();
+}
+
 
     // Selección opción única
     function seleccionarOpcion(qIdx, optIdx) {
