@@ -56,16 +56,7 @@
             color: #fff !important;
             border-color: #2575fc !important;
         }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            display: none;
-        }
+    
         input[type="radio"],
         input[type="checkbox"] {
             display: none;
@@ -107,11 +98,7 @@
             width: 0;
             transition: width 0.4s ease;
         }
-        .spinner {
-            display: flex;
-            justify-content: center;
-            margin-top: 30px;
-        }
+       
         .spinner div {
             width: 16px;
             height: 16px;
@@ -183,8 +170,9 @@
         <div id="quiz"></div>
     </div>
     <script>
-        // Webhook URL - REEMPLAZA CON TU URL REAL
-        const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/c21987df-92a7-425f-bb63-184a78306493';
+           // Webhook URL - REEMPLAZA CON TU URL REAL (ngrok o server)
+   const N8N_WEBHOOK_URL = 'https://eb6d59a43817.ngrok-free.app/webhook/Survey2';  // Nuevo path para segunda
+   
         
         // Traducciones de preguntas y opciones
         const traducciones = {
@@ -291,16 +279,55 @@
             { pregunta: "¿Alguna vez has gastado dinero en un juego (ej.: para obtener monedas, vidas o recompensas)?", tipo: "opcion", opciones: ["Sí", "No"] }
         ];
 
+           // Mapeo de preguntas (index 0-22) a keys en inglés para el JSON/BD
+   const fieldMapping = {
+       0: 'age_range',
+       1: 'gender',
+       2: 'ever_bet_online',
+       3: 'betting_frequency',
+       4: 'hours_per_day',
+       5: 'betting_days',
+       6: 'betting_activities',
+       7: 'official_sites',
+       8: 'money_sources',
+       9: 'weekly_bet_amount',
+       10: 'parents_know',
+       11: 'how_discovered_online_games',
+       12: 'reasons_for_betting',
+       13: 'know_betting_risks',
+       14: 'know_where_to_seek_help',
+       15: 'want_information',
+       16: 'knows_someone_who_bets',
+       17: 'recommended_to_bet',
+       18: 'want_to_bet_someday',
+       19: 'know_risks_level',
+       20: 'know_help_for_problems',
+       21: 'seen_betting_ads',
+       22: 'spent_money_on_games'
+   };
+   
         let currentQuestionIndex = 0;
         let answers = {};
         let questionFlow = [0, 1, 2]; // Always start with first 3 questions
         let currentLang = 'es';
+        let surveyStarted = false;  // Para bloquear cambio de idioma después de empezar
         let currentFlowIndex = 0;
 
-        function cambiarIdioma(lang) {
-            currentLang = lang;
-            mostrarPregunta();
-        }
+           function cambiarIdioma(lang) {
+       if (surveyStarted) {
+           const alertText = {
+               es: 'No puedes cambiar el idioma una vez iniciada la encuesta.',
+               en: 'You cannot change the language once the survey has started.',
+               zh: '调查开始后不能更改语言。'
+           };
+           alert(alertText[currentLang]);
+           document.getElementById('lang').value = currentLang;  // Revierte
+           return;
+       }
+       currentLang = lang;
+       mostrarPregunta();
+   }
+   
 
         function getQuestionText(questionIndex) {
             if (currentLang === 'es') {
@@ -334,6 +361,7 @@
         }
 
         function mostrarPregunta() {
+            surveyStarted = true;
             const realQuestionIndex = questionFlow[currentFlowIndex];
             const questionData = getQuestionText(realQuestionIndex);
             
@@ -468,20 +496,78 @@
             }
         }
 
-        function enviarEncuesta() {
-            if (!validarRespuesta()) {
-                const alertText = {
-                    es: 'Por favor selecciona una opción',
-                    en: 'Please select an option',
-                    zh: '请选择一个选项'
-                };
-                alert(alertText[currentLang]);
-                return;
-            }
-            
-            mostrarMensajeFinal();
-        }
+         // Función para enviar datos al webhook de n8n (mapea a keys en inglés, preserva idioma)
+   async function enviarEncuesta() {
+       if (!validarRespuesta()) {
+           const alertText = {
+               es: 'Por favor selecciona una opción',
+               en: 'Please select an option',
+               zh: '请选择一个选项'
+           };
+           alert(alertText[currentLang]);
+           return;
+       }
 
+       // Mapear answers a JSON con keys en inglés (respuestas en idioma actual)
+       let data = { language: currentLang };  // Track idioma
+       for (let i = 0; i <= 22; i++) {  // 23 preguntas (0-22)
+           let englishKey = fieldMapping[i];
+           if (englishKey) {
+               // Manejar salto lógico: si pregunta 3 (index 2) es "No", nulls para 3-15
+               const everBet = answers[2];
+               const isNoPath = (everBet === "No" || everBet === "No" || everBet === "否");  // Ajusta por idioma
+               if (i >= 3 && i <= 15 && isNoPath) {
+                   data[englishKey] = null;
+               } else {
+                   let rawValue = answers[i];
+                   if (rawValue === undefined) {
+                       data[englishKey] = null;
+                   } else if (Array.isArray(rawValue)) {
+                       data[englishKey] = rawValue;  // Array para multiple (ej. ["Lunes", "Sábado"])
+                   } else {
+                       data[englishKey] = rawValue || "";  // String en idioma actual
+                   }
+               }
+           }
+       }
+       data.timestamp = new Date().toISOString();  // Timestamp
+
+       // Log para depuración (F12 Console)
+       console.log('JSON enviado (keys en inglés, respuestas en idioma):', data);
+
+       if (!N8N_WEBHOOK_URL) {
+           console.error('N8N_WEBHOOK_URL no configurada.');
+           mostrarMensajeFinal(false, 'URL no configurada.');  // Error simulado
+           return;
+       }
+
+       try {
+           const response = await fetch(N8N_WEBHOOK_URL, {
+               method: 'POST',
+               mode: 'cors',  // Para cross-origin (GitHub a ngrok/server)
+               headers: {
+                   'Content-Type': 'application/json',
+               },
+               body: JSON.stringify(data)
+           });
+
+           if (!response.ok) {
+               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+           }
+
+           const result = await response.json();
+           if (result && (result.success || response.ok)) {
+               console.log('Éxito real:', result);
+               mostrarMensajeFinal(true);  // Éxito
+           } else {
+               throw new Error('Respuesta del servidor no indica éxito');
+           }
+       } catch (error) {
+           console.error('Error al enviar:', error);
+           mostrarMensajeFinal(false, error.message);  // Error
+       }
+   }
+   
         function mostrarMensajeFinal() {
             const finalMessages = {
                 es: `
@@ -545,6 +631,7 @@
     </script>
 </body>
 </html>
+
 
 
 
