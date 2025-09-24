@@ -407,13 +407,14 @@
                 html += `<button onclick="enviarEncuesta()">${submitText[currentLang]}</button>`;
             } else {
                 // Show next button
-                const nextText = {
-                    es: 'Siguiente',
-                    en: 'Next',
-                    zh: '下一个'
-                };
-                html += `<button onclick="siguientePregunta()">${nextText[currentLang]}</button>`;
-            }
+               // Next button (siempre "Siguiente", envío al final)
+   const nextText = {
+       es: 'Siguiente',
+       en: 'Next',
+       zh: '下一个'
+   };
+   html += `<button onclick="siguientePregunta()">${nextText[currentLang]}</button>`;
+
             
             html += '</div>';
             
@@ -462,33 +463,35 @@
             }
         }
 
-        function siguientePregunta() {
-            if (!validarRespuesta()) {
-                const alertText = {
-                    es: 'Por favor selecciona una opción',
-                    en: 'Please select an option',
-                    zh: '请选择一个选项'
-                };
-                alert(alertText[currentLang]);
-                return;
-            }
-            
-            const realQuestionIndex = questionFlow[currentFlowIndex];
-            
-            // Update flow after answering question 3
-            if (realQuestionIndex === 2) {
-                updateQuestionFlow();
-            }
-            
-            currentFlowIndex++;
-            
-            if (currentFlowIndex >= questionFlow.length) {
-                mostrarMensajeFinal();
-            } else {
-                mostrarPregunta();
-            }
-        }
-
+          function siguientePregunta() {
+       if (!validarRespuesta()) {
+           const alertText = {
+               es: 'Por favor selecciona una opción',
+               en: 'Please select an option',
+               zh: '请选择一个选项'
+           };
+           alert(alertText[currentLang]);
+           return;
+       }
+       
+       const realQuestionIndex = questionFlow[currentFlowIndex];
+       
+       // Update flow after answering question 3
+       if (realQuestionIndex === 2) {
+           updateQuestionFlow();
+       }
+       
+       currentFlowIndex++;
+       
+       if (currentFlowIndex >= questionFlow.length) {
+           enviarEncuesta();  // ¡CAMBIO: Envía datos al final de cualquier path (Sí o No)
+       } else {
+           mostrarPregunta();
+       }
+   }
+   
+          
+         
         function anteriorPregunta() {
             if (currentFlowIndex > 0) {
                 currentFlowIndex--;
@@ -511,25 +514,30 @@
        // Mapear answers a JSON con keys en inglés (respuestas en idioma actual)
        let data = { language: currentLang };  // Track idioma
        for (let i = 0; i <= 22; i++) {  // 23 preguntas (0-22)
-           let englishKey = fieldMapping[i];
-           if (englishKey) {
-               // Manejar salto lógico: si pregunta 3 (index 2) es "No", nulls para 3-15
-               const everBet = answers[2];
-               const isNoPath = (everBet === "No" || everBet === "No" || everBet === "否");  // Ajusta por idioma
-               if (i >= 3 && i <= 15 && isNoPath) {
+       let englishKey = fieldMapping[i];
+       if (englishKey) {
+           // Manejar salto lógico: si pregunta 3 (index 2) es "No" en el idioma actual, nulls para 3-15
+           const everBet = answers[2];
+           const noValues = {
+               es: 'No',
+               en: 'No',
+               zh: '否'
+           };
+           const isNoPath = everBet === noValues[currentLang];
+           if (i >= 3 && i <= 15 && isNoPath) {
+               data[englishKey] = null;
+           } else {
+               let rawValue = answers[i];
+               if (rawValue === undefined) {
                    data[englishKey] = null;
+               } else if (Array.isArray(rawValue)) {
+                   data[englishKey] = rawValue;  // Array para multiple
                } else {
-                   let rawValue = answers[i];
-                   if (rawValue === undefined) {
-                       data[englishKey] = null;
-                   } else if (Array.isArray(rawValue)) {
-                       data[englishKey] = rawValue;  // Array para multiple (ej. ["Lunes", "Sábado"])
-                   } else {
-                       data[englishKey] = rawValue || "";  // String en idioma actual
-                   }
+                   data[englishKey] = rawValue || "";  // String en idioma actual
                }
            }
        }
+   }
        data.timestamp = new Date().toISOString();  // Timestamp
 
        // Log para depuración (F12 Console)
@@ -568,59 +576,61 @@
        }
    }
    
-        function mostrarMensajeFinal() {
-            const finalMessages = {
-                es: `
-                    <h2>Gracias por responder esta encuesta</h2>
-                    <div class="final-message">
-                        <p>Si querés o necesitás más información sobre el tema podés:</p>
-                        <ul style="text-align:left;">
-                            <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
-                            <li>Centros de ayuda municipal en Chascomús:</li>
-                            <ul>
-                                <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
-                                <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
-                            </ul>
-                            <li>Por Urgencias llamar al <b>107</b></li>
-                        </ul>
-                    </div>
-                `,
-                en: `
-                    <h2>Thank you for answering this survey</h2>
-                    <div class="final-message">
-                        <p>If you want or need more information about the topic you can:</p>
-                        <ul style="text-align:left;">
-                            <li>Visit <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
-                            <li>Municipal help centers in Chascomús:</li>
-                            <ul>
-                                <li>Centro de Día Chascomús, Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Monday to Friday 08:00-14:00.</li>
-                                <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, 09:00-14:00, Tel: 02241-400278.</li>
-                            </ul>
-                            <li>For emergencies call <b>107</b></li>
-                        </ul>
-                    </div>
-                `,
-                zh: `
-                    <h2>感谢您参与本次调查</h2>
-                    <div class="final-message">
-                        <p>如需更多信息，请：</p>
-                        <ul style="text-align:left;">
-                            <li>访问 <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
-                            <li>Chascomús 市政帮助中心：</li>
-                            <ul>
-                                <li>Centro de Día Chascomús，Carmona 36，Barrio 30 de Mayo，电话：02241-409070，周一至周五 08:00-14:00。</li>
-                                <li>Centro de Prevención de las Adicciones，Carmona 36，Barrio 30 de Mayo，09:00-14:00，电话：02241-400278。</li>
-                            </ul>
-                            <li>紧急情况请拨打 <b>107</b></li>
-                        </ul>
-                    </div>
-                `
-            };
-            
-            document.getElementById('progress').style.width = '100%';
-            document.getElementById('quiz').innerHTML = finalMessages[currentLang];
-        }
+           function mostrarMensajeFinal(success = null, errorMsg = '') {
+       const finalMessages = {
+           es: `
+               <h2>Gracias por responder esta encuesta</h2>
+               <div class="final-message">
+                   <p>Si querés o necesitás más información sobre el tema podés:</p>
+           `,
+           en: `
+               <h2>Thank you for answering this survey</h2>
+               <div class="final-message">
+                   <p>If you want or need more information about the topic you can:</p>
+           `,
+           zh: `
+               <h2>感谢您参与本次调查</h2>
+               <div class="final-message">
+                   <p>如需更多信息，请：</p>
+           `
+       };
 
+       let html = finalMessages[currentLang];
+
+       // Insertar mensaje de éxito o error
+       if (success === true) {
+           html += `
+               <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #c3e6cb;">
+                   <strong>¡Éxito!</strong> Tus respuestas se enviaron correctamente.
+               </div>
+           `;
+       } else if (success === false) {
+           html += `
+               <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #f5c6cb;">
+                   <strong>Error en el envío:</strong> ${errorMsg}. Puedes reintentar o contactar al administrador.
+                   <button onclick="enviarEncuesta()" style="margin: 5px; background: #2575fc; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Reintentar</button>
+               </div>
+           `;
+       }
+
+       html += `
+                   <ul style="text-align:left;">
+                       <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
+                       <li>Centros de ayuda municipal en Chascomús:</li>
+                       <ul style="text-align:left; margin-left: 20px; list-style-type: disc;">
+                           <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
+                           <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
+                       </ul>
+                       <li>Por Urgencias llamar al <b>107</b></li>
+                   </ul>
+                   ${success === false ? '<button onclick="location.reload()" style="margin-top: 10px; background: #ddd; color: #333; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Recargar y Responder de Nuevo</button>' : ''}
+               </div>
+           `;
+
+       document.getElementById('progress').style.width = '100%';
+       document.getElementById('quiz').innerHTML = html;
+   }
+   
         function actualizarProgreso() {
             const progreso = ((currentFlowIndex + 1) / questionFlow.length) * 100;
             document.getElementById('progress').style.width = progreso + '%';
@@ -631,6 +641,7 @@
     </script>
 </body>
 </html>
+
 
 
 
