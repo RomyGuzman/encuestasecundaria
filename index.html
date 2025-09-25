@@ -397,12 +397,6 @@
            html += `<button class="back-btn" onclick="anteriorPregunta()">${backText[currentLang]}</button>`;
        }
 
-               function actualizarProgreso() {
-    const totalQuestions = questionFlow.length;
-    const currentProgress = ((currentFlowIndex + 1) / totalQuestions) * 100;
-    document.getElementById('progress').style.width = currentProgress + '%';
-}
-
        // Siempre botón "Siguiente" (envío automático al final del flow)
        const nextText = {
            es: 'Siguiente',
@@ -494,100 +488,90 @@
             }
         }
 
-// Enviar respuestas a n8n
-async function enviarEncuesta() {
-    let data = {
-        language: currentLang,
-        responses: answers,
-        timestamp: new Date().toISOString()
-    };
+    // Función para enviar datos a n8n
+    async function enviarDatos() {
+        const data = {
+            respuestas,
+            idioma: currentLang
+        };
 
-    try {
-        const response = await fetch(N8N_WEBHOOK_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
+        try {
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
 
-        if (response.ok) {
-            mostrarFinal(true);
-        } else {
-            mostrarFinal(false, 'Error en el servidor');
+            if (response.ok) {
+                mostrarFinal(true);
+            } else {
+                mostrarFinal(false, 'Error en el servidor');
+            }
+        } catch (error) {
+            console.error('Error al enviar:', error);
+            mostrarFinal(false, 'No se pudo conectar con el servidor');
         }
-    } catch (error) {
-        console.error('Error al enviar:', error);
-        mostrarFinal(false, 'No se pudo conectar con el servidor');
-    }
-}
-
-// Mensaje final (personalizado con recursos de ayuda)
-function mostrarFinal(success = null, errorMsg = '') {
-    let html = `
-        <h2>Gracias por responder esta encuesta</h2>
-        <div class="final-message">
-            <p>Si querés o necesitás más información sobre el tema podés:</p>
-    `;
-
-    if (success === true) {
-        html += `
-            <div class="success-msg">
-                <strong>¡Éxito!</strong> Tus respuestas se enviaron correctamente a nuestra base de datos.
-            </div>
-        `;
-    } else if (success === false) {
-        html += `
-            <div class="error-msg-final">
-                <strong>Error en el envío:</strong> ${errorMsg}. 
-                <p>No te preocupes, puedes reintentar o contactar al administrador si persiste.</p>
-                <button onclick="enviarEncuesta()" style="margin: 5px;">Reintentar Envío</button>
-            </div>
-        `;
     }
 
-    html += `
-            <ul style="text-align:left;">
-                <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
-                <li>Centros de ayuda municipal en Chascomús:</li>
-                <ul style="text-align:left; margin-left: 20px; list-style-type: disc;">
-                    <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
-                    <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
+    // Función para actualizar la barra de progreso
+    function actualizarProgreso() {
+        let progreso = ((preguntaActual) / preguntas.length) * 100;
+        if (document.getElementById("progress")) {
+            document.getElementById("progress").style.width = progreso + "%";
+        }
+    }
+
+    // Mensaje final (con recursos de ayuda)
+    function mostrarFinal(success = null, errorMsg = '') {
+        let html = `
+            <h2>Gracias por responder esta encuesta</h2>
+            <div class="final-message">
+                <p>Si querés o necesitás más información sobre el tema podés:</p>
+        `;
+
+        // Mensaje de éxito o error
+        if (success === true) {
+            html += `
+                <div class="success-msg">
+                    <strong>¡Éxito!</strong> Tus respuestas se enviaron correctamente a nuestra base de datos.
+                </div>
+            `;
+        } else if (success === false) {
+            html += `
+                <div class="error-msg-final">
+                    <strong>Error en el envío:</strong> ${errorMsg}. 
+                    <p>No te preocupes, puedes reintentar o contactar al administrador si persiste.</p>
+                    <button onclick="enviarDatos()" style="margin: 5px;">Reintentar Envío</button>
+                </div>
+            `;
+        }
+
+        html += `
+                <ul style="text-align:left;">
+                    <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
+                    <li>Centros de ayuda municipal en Chascomús:</li>
+                    <ul style="text-align:left; margin-left: 20px; list-style-type: disc;">
+                        <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
+                        <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
+                    </ul>
+                    <li>Por Urgencias llamar al <b>107</b></li>
                 </ul>
-                <li>Por Urgencias llamar al <b>107</b></li>
-            </ul>
-            ${success === false ? '<button onclick="location.reload()" style="margin-top: 10px; background: #ddd; color: #333; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Recargar y Responder de Nuevo</button>' : ''}
-        </div>
-    `;
+                ${success === false ? '<button onclick="location.reload()" style="margin-top: 10px; background: #ddd; color: #333; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Recargar y Responder de Nuevo</button>' : ''}
+            </div>
+        `;
 
-    document.getElementById("quiz").innerHTML = html;
-    if (document.getElementById("progress")) {
-        document.getElementById("progress").style.width = "100%";
+        document.getElementById("quiz").innerHTML = html;
+        // Actualizar progreso al 100%
+        if (document.getElementById("progress")) {
+            document.getElementById("progress").style.width = "100%";
+        }
     }
-}
 
-// Inicializa la encuesta
-mostrarPregunta();
-        
-</script>
+    // Inicializar la encuesta al cargar la página
+    renderQuestion();
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
