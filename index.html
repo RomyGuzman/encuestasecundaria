@@ -254,7 +254,7 @@
         };
 
         const questions = [
-            { pregunta: "Edad: selecciona tu edad", opciones: ["12", "13", "14", "15", "16", "17"] },
+            { pregunta: "Edad: selecciona tu edad", tipo: "opcion", opciones: ["12", "13", "14", "15", "16", "17"] },  // Agrega tipo
             { pregunta: "Género", tipo: "opcion", opciones: ["Femenino", "Masculino", "Otro"] },
             { pregunta: "¿Has apostado en línea alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
             { pregunta: "¿Con qué frecuencia sueles apostar?", tipo: "opcion", opciones: ["1 a 2 días por semana", "3 a 5 días por semana", "6 a 7 días por semana"] },
@@ -281,7 +281,7 @@
 
            // Mapeo de preguntas (index 0-22) a keys en inglés para el JSON/BD
    const fieldMapping = {
-       0: 'age_range',
+       0: 'age',
        1: 'gender',
        2: 'ever_bet_online',
        3: 'betting_frequency',
@@ -346,19 +346,22 @@
     const newFlow = [0, 1, 2];
     
     if (question3Answer === "Sí" || question3Answer === "Yes" || question3Answer === "是") {
-        // Path "Sí": Full flow 3-22 (todas las preguntas)
-        for (let i = 3; i <= 22; i++) {
+        // Path "Sí": 0-2 + 3-15 (hasta pregunta 16, 16 totales)
+        for (let i = 3; i <= 15; i++) {
             newFlow.push(i);
         }
     } else {
-        // Path "No": Salta 3-15, va directo a 16-22
+        // Path "No": 0-2 + 16-22 (salta a pregunta 17, 10 totales)
         for (let i = 16; i <= 22; i++) {
             newFlow.push(i);
         }
     }
     
     questionFlow = newFlow;
+    // Opcional: Log para debug (borra después)
+    console.log('Nuevo flujo (length):', questionFlow.length, questionFlow);
 }
+
            function mostrarPregunta() {
        surveyStarted = true;
        const realQuestionIndex = questionFlow[currentFlowIndex];
@@ -497,34 +500,40 @@
            return;
        }
 
-       // Mapear answers a JSON con keys en inglés (respuestas en idioma actual)
-       let data = { language: currentLang };  // Track idioma
-       for (let i = 0; i <= 22; i++) {  // 23 preguntas (0-22)
-       let englishKey = fieldMapping[i];
-       if (englishKey) {
-           // Manejar salto lógico: si pregunta 3 (index 2) es "No" en el idioma actual, nulls para 3-15
-           const everBet = answers[2];
-           const noValues = {
-               es: 'No',
-               en: 'No',
-               zh: '否'
-           };
-           const isNoPath = everBet === noValues[currentLang];
-           if (i >= 3 && i <= 15 && isNoPath) {
-               data[englishKey] = null;
-           } else {
-               let rawValue = answers[i];
-               if (rawValue === undefined) {
-                   data[englishKey] = null;
-               } else if (Array.isArray(rawValue)) {
-                   data[englishKey] = rawValue;  // Array para multiple
-               } else {
-                   data[englishKey] = rawValue || "";  // String en idioma actual
-               }
-           }
-       }
-   }
-       data.timestamp = new Date().toISOString();  // Timestamp
+                   es: 'No',
+            en: 'No',
+            zh: '否'
+        };
+        const yesValues = {
+            es: 'Sí',
+            en: 'Yes',
+            zh: '是'
+        };
+        const isNoPath = everBet === noValues[currentLang];
+        const isYesPath = everBet === yesValues[currentLang];
+        
+        if (isNoPath && i >= 3 && i <= 15) {
+            // Path "No": Nulls en 3-15
+            data[englishKey] = null;
+        } else if (isYesPath && i >= 16 && i <= 22) {
+            // Path "Sí": Nulls en 16-22 (nuevo)
+            data[englishKey] = null;
+        } else {
+            // Llenar si respondida (o null si undefined)
+            let rawValue = answers[i];
+            if (rawValue === undefined) {
+                data[englishKey] = null;
+            } else if (Array.isArray(rawValue)) {
+                data[englishKey] = rawValue;  // Array para multiple
+            } else {
+                data[englishKey] = rawValue || "";  // String en idioma actual
+            }
+        }
+    }
+}
+        
+data.timestamp = new Date().toISOString();  // Timestamp
+// ... (resto igual: console.log, if (!N8N_WEBHOOK_URL), try-catch, mostrarMensajeFinal)
 
        // Log para depuración (F12 Console)
        console.log('JSON enviado (keys en inglés, respuestas en idioma):', data);
@@ -627,6 +636,7 @@
     </script>
 </body>
 </html>
+
 
 
 
