@@ -342,24 +342,23 @@
         }
 
         function updateQuestionFlow() {
-            const question3Answer = answers[2];
-            const newFlow = [0, 1, 2];
-            
-            if (question3Answer === "Sí" || question3Answer === "Yes" || question3Answer === "是") {
-                // Continue with questions 3-15
-                for (let i = 3; i <= 15; i++) {
-                    newFlow.push(i);
-                }
-            } else {
-                // Skip to questions 16-22
-                for (let i = 16; i <= 22; i++) {
-                    newFlow.push(i);
-                }
-            }
-            
-            questionFlow = newFlow;
+    const question3Answer = answers[2];
+    const newFlow = [0, 1, 2];
+    
+    if (question3Answer === "Sí" || question3Answer === "Yes" || question3Answer === "是") {
+        // Path "Sí": Full flow 3-22 (todas las preguntas)
+        for (let i = 3; i <= 22; i++) {
+            newFlow.push(i);
         }
-
+    } else {
+        // Path "No": Salta 3-15, va directo a 16-22
+        for (let i = 16; i <= 22; i++) {
+            newFlow.push(i);
+        }
+    }
+    
+    questionFlow = newFlow;
+}
            function mostrarPregunta() {
        surveyStarted = true;
        const realQuestionIndex = questionFlow[currentFlowIndex];
@@ -628,6 +627,7 @@
     </script>
 </body>
 </html>
+
 
 
 
