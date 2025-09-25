@@ -254,30 +254,31 @@
         };
 
         const questions = [
-            { pregunta: "Edad: selecciona tu edad", tipo: "opcion", opciones: ["12", "13", "14", "15", "16", "17"] },  // Agrega tipo
-            { pregunta: "Género", tipo: "opcion", opciones: ["Femenino", "Masculino", "Otro"] },
-            { pregunta: "¿Has apostado en línea alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
-            { pregunta: "¿Con qué frecuencia sueles apostar?", tipo: "opcion", opciones: ["1 a 2 días por semana", "3 a 5 días por semana", "6 a 7 días por semana"] },
-            { pregunta: "¿Cuántas horas apostás por día?", tipo: "opcion", opciones: ["Menos de 1 hora", "1 a 2 horas", "Más de 3 horas"] },
-            { pregunta: "¿Qué días de la semana sueles apostar?", tipo: "multiple", opciones: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] },
-            { pregunta: "¿En qué tipo de actividades apuestas?", tipo: "multiple", opciones: ["Casino online", "Apuestas deportivas", "Póker u otros juegos de cartas", "Juegos de azar (ruleta, tragamonedas, etc.)", "Otro"] },
-            { pregunta: "¿Los sitios de apuestas en los que juegas son oficiales (.bet)?", tipo: "opcion", opciones: ["Sí", "No", "No sé"] },
-            { pregunta: "¿De dónde obtienes el dinero para apostar?", tipo: "multiple", opciones: ["Un familiar", "Trabajo", "Becas", "Otro"] },
-            { pregunta: "¿Cuánto dinero sueles apostar en una semana?", tipo: "opcion", opciones: ["Entre $1.000 y $5.000", "Entre $5.000 y $10.000", "Más de $10.000"] },
-            { pregunta: "¿Tus padres o tutores saben que apuestas?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
-            { pregunta: "¿Cómo conociste los juegos en línea?", tipo: "multiple", opciones: ["Redes sociales", "Amigos", "Familia", "Otro"] },
-            { pregunta: "¿Por qué apuestas?", tipo: "opcion", opciones: ["Diversión o entretenimiento", "Para ganar dinero", "Porque mis amigos lo hacen", "Otro"] },
-            { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No"] },
-            { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
-            { pregunta: "¿Te gustaría recibir información al respecto?", tipo: "opcion", opciones: ["Sí", "No"] },
-            { pregunta: "¿Conoces a alguien que apueste en línea?", tipo: "opcion", opciones: ["Sí", "No"] },
-            { pregunta: "¿Alguien te ha recomendado apostar alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
-            { pregunta: "¿Te gustaría apostar algún día?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
-            { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No", "Un poco"] },
-            { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
-            { pregunta: "¿Has visto anuncios de apuestas en línea en redes sociales o internet?", tipo: "opcion", opciones: ["Sí, muchas veces", "Algunas veces", "Nunca"] },
-            { pregunta: "¿Alguna vez has gastado dinero en un juego (ej.: para obtener monedas, vidas o recompensas)?", tipo: "opcion", opciones: ["Sí", "No"] }
-        ];
+    { pregunta: "Edad: selecciona tu edad", tipo: "opcion", opciones: ["12", "13", "14", "15", "16", "17"] },
+    { pregunta: "Género", tipo: "opcion", opciones: ["Femenino", "Masculino", "Otro"] },
+    { pregunta: "¿Has apostado en línea alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
+    { pregunta: "¿Con qué frecuencia sueles apostar?", tipo: "opcion", opciones: ["1 a 2 días por semana", "3 a 5 días por semana", "6 a 7 días por semana"] },
+    { pregunta: "¿Cuántas horas apostás por día?", tipo: "opcion", opciones: ["Menos de 1 hora", "1 a 2 horas", "Más de 3 horas"] },
+    { pregunta: "¿Qué días de la semana sueles apostar?", tipo: "multiple", opciones: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] },
+    { pregunta: "¿En qué tipo de actividades apuestas?", tipo: "multiple", opciones: ["Casino online", "Apuestas deportivas", "Póker u otros juegos de cartas", "Juegos de azar (ruleta, tragamonedas, etc.)", "Otro"] },
+    { pregunta: "¿Los sitios de apuestas en los que juegas son oficiales (.bet)?", tipo: "opcion", opciones: ["Sí", "No", "No sé"] },
+    { pregunta: "¿De dónde obtienes el dinero para apostar?", tipo: "opcion", opciones: ["Un familiar", "Trabajo", "Becas", "Otro"] },
+    { pregunta: "¿Cuánto dinero sueles apostar en una semana?", tipo: "opcion", opciones: ["Entre $1.000 y $5.000", "Entre $5.000 y $10.000", "Más de $10.000"] },
+    { pregunta: "¿Tus padres o tutores saben que apuestas?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
+    { pregunta: "¿Cómo conociste los juegos en línea?", tipo: "opcion", opciones: ["Redes sociales", "Amigos", "Familia", "Otro"] },
+    { pregunta: "¿Por qué apuestas?", tipo: "opcion", opciones: ["Diversión o entretenimiento", "Para ganar dinero", "Porque mis amigos lo hacen", "Otro"] },
+    { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No"] },
+    { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
+    { pregunta: "¿Te gustaría recibir información al respecto?", tipo: "opcion", opciones: ["Sí", "No"] },
+    { pregunta: "¿Conoces a alguien que apueste en línea?", tipo: "opcion", opciones: ["Sí", "No"] },
+    { pregunta: "¿Alguien te ha recomendado apostar alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
+    { pregunta: "¿Te gustaría apostar algún día?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
+    { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No", "Un poco"] },
+    { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
+    { pregunta: "¿Has visto anuncios de apuestas en línea en redes sociales o internet?", tipo: "opcion", opciones: ["Sí, muchas veces", "Algunas veces", "Nunca"] },
+    { pregunta: "¿Alguna vez has gastado dinero en un juego (ej.: para obtener monedas, vidas o recompensas)?", tipo: "opcion", opciones: ["Sí", "No"] }
+];
+
 
            // Mapeo de preguntas (index 0-22) a keys en inglés para el JSON/BD
    const fieldMapping = {
@@ -572,6 +573,7 @@ mostrarPregunta();
 </script>
 </body>
 </html>
+
 
 
 
