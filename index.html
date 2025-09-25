@@ -479,8 +479,7 @@
        }
    }
    
-          
-         
+                
         function anteriorPregunta() {
             if (currentFlowIndex > 0) {
                 currentFlowIndex--;
@@ -489,87 +488,93 @@
         }
 
          // Función para enviar datos al webhook de n8n (mapea a keys en inglés, preserva idioma)
-   async function enviarEncuesta() {
-       if (!validarRespuesta()) {
-           const alertText = {
-               es: 'Por favor selecciona una opción',
-               en: 'Please select an option',
-               zh: '请选择一个选项'
-           };
-           alert(alertText[currentLang]);
-           return;
-       }
+async function enviarEncuesta() {
+    if (!validarRespuesta()) {
+        const alertText = {
+            es: 'Por favor selecciona una opción',
+            en: 'Please select an option',
+            zh: '请选择一个选项'
+        };
+        alert(alertText[currentLang]);
+        return;
+    }
 
-                   es: 'No',
-            en: 'No',
-            zh: '否'
-        };
-        const yesValues = {
-            es: 'Sí',
-            en: 'Yes',
-            zh: '是'
-        };
-        const isNoPath = everBet === noValues[currentLang];
-        const isYesPath = everBet === yesValues[currentLang];
-        
-        if (isNoPath && i >= 3 && i <= 15) {
-            // Path "No": Nulls en 3-15
-            data[englishKey] = null;
-        } else if (isYesPath && i >= 16 && i <= 22) {
-            // Path "Sí": Nulls en 16-22 (nuevo)
-            data[englishKey] = null;
-        } else {
-            // Llenar si respondida (o null si undefined)
-            let rawValue = answers[i];
-            if (rawValue === undefined) {
+    // Mapear answers a JSON con keys en inglés (respuestas en idioma actual)
+    let data = { language: currentLang };  // Track idioma
+    const everBet = answers[2];  // Respuesta de pregunta 3 (para paths)
+    const noValues = {
+        es: 'No',
+        en: 'No',
+        zh: '否'
+    };
+    const yesValues = {
+        es: 'Sí',
+        en: 'Yes',
+        zh: '是'
+    };
+    const isNoPath = everBet === noValues[currentLang];
+    const isYesPath = everBet === yesValues[currentLang];
+    
+    for (let i = 0; i <= 22; i++) {  // 23 preguntas (0-22)
+        let englishKey = fieldMapping[i];
+        if (englishKey) {
+            if (isNoPath && i >= 3 && i <= 15) {
+                // Path "No": Nulls en 3-15
                 data[englishKey] = null;
-            } else if (Array.isArray(rawValue)) {
-                data[englishKey] = rawValue;  // Array para multiple
+            } else if (isYesPath && i >= 16 && i <= 22) {
+                // Path "Sí": Nulls en 16-22
+                data[englishKey] = null;
             } else {
-                data[englishKey] = rawValue || "";  // String en idioma actual
+                // Llenar si respondida (o null si undefined)
+                let rawValue = answers[i];
+                if (rawValue === undefined) {
+                    data[englishKey] = null;
+                } else if (Array.isArray(rawValue)) {
+                    data[englishKey] = rawValue;  // Array para multiple
+                } else {
+                    data[englishKey] = rawValue || "";  // String en idioma actual
+                }
             }
         }
     }
+    data.timestamp = new Date().toISOString();  // Timestamp
+
+    // Log para depuración (F12 Console)
+    console.log('JSON enviado (keys en inglés, respuestas en idioma):', data);
+
+    if (!N8N_WEBHOOK_URL) {
+        console.error('N8N_WEBHOOK_URL no configurada.');
+        mostrarMensajeFinal(false, 'URL no configurada.');  // Error simulado
+        return;
+    }
+
+    try {
+        const response = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'cors',  // Para cross-origin (GitHub a ngrok/server)
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result && (result.success || response.ok)) {
+            console.log('Éxito real:', result);
+            mostrarMensajeFinal(true);  // Éxito
+        } else {
+            throw new Error('Respuesta del servidor no indica éxito');
+        }
+    } catch (error) {
+        console.error('Error al enviar:', error);
+        mostrarMensajeFinal(false, error.message);  // Error
+    }
 }
-        
-data.timestamp = new Date().toISOString();  // Timestamp
-// ... (resto igual: console.log, if (!N8N_WEBHOOK_URL), try-catch, mostrarMensajeFinal)
 
-       // Log para depuración (F12 Console)
-       console.log('JSON enviado (keys en inglés, respuestas en idioma):', data);
-
-       if (!N8N_WEBHOOK_URL) {
-           console.error('N8N_WEBHOOK_URL no configurada.');
-           mostrarMensajeFinal(false, 'URL no configurada.');  // Error simulado
-           return;
-       }
-
-       try {
-           const response = await fetch(N8N_WEBHOOK_URL, {
-               method: 'POST',
-               mode: 'cors',  // Para cross-origin (GitHub a ngrok/server)
-               headers: {
-                   'Content-Type': 'application/json',
-               },
-               body: JSON.stringify(data)
-           });
-
-           if (!response.ok) {
-               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-           }
-
-           const result = await response.json();
-           if (result && (result.success || response.ok)) {
-               console.log('Éxito real:', result);
-               mostrarMensajeFinal(true);  // Éxito
-           } else {
-               throw new Error('Respuesta del servidor no indica éxito');
-           }
-       } catch (error) {
-           console.error('Error al enviar:', error);
-           mostrarMensajeFinal(false, error.message);  // Error
-       }
-   }
    
            function mostrarMensajeFinal(success = null, errorMsg = '') {
        const finalMessages = {
@@ -636,6 +641,7 @@ data.timestamp = new Date().toISOString();  // Timestamp
     </script>
 </body>
 </html>
+
 
 
 
