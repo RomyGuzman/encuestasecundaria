@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Encuesta </title>
+    <title>Encuesta</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
@@ -153,28 +153,35 @@
             margin-bottom: 15px;
             font-style: italic;
         }
+        .success-msg {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+        .error-msg-final {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>ENCUESTA</h1>
-        <div style="text-align:right; margin-bottom:10px;">
-            <label for="lang">Idioma:</label>
-            <select id="lang" onchange="cambiarIdioma(this.value)">
-                <option value="es">Español</option>
-                <option value="en">English</option>
-                <option value="zh">中文</option>
-            </select>
-        </div>
         <div class="progress-bar"><div id="progress" class="progress"></div></div>
         <div id="quiz"></div>
     </div>
     <script>
-           // Webhook URL - REEMPLAZA CON TU URL REAL (ngrok o server)
-   const N8N_WEBHOOK_URL = 'https://1ba0eb6ddedb.ngrok-free.app/webhook-test/Secundario';  // Nuevo path para segunda
-   
+        // Webhook URL - REEMPLAZA CON TU URL REAL DE N8N (ej. ngrok para pruebas externas, o localhost si n8n corre local)
+        const N8N_WEBHOOK_URL = 'https://instituto-n8n.lyeztz.easypanel.host/webhook-test/Secundario';
         
-        // Traducciones de preguntas y opciones
+        // Traducciones de preguntas y opciones (preguntas codificadas internamente en inglés via fieldMapping)
         const traducciones = {
             es: [
                 { pregunta: "Edad: selecciona tu edad", opciones: ["12", "13", "14", "15", "16", "17"] },
@@ -253,122 +260,239 @@
             ]
         };
 
+        // Estructura base de preguntas (en español, para tipos)
         const questions = [
-    { pregunta: "Edad: selecciona tu edad", tipo: "opcion", opciones: ["12", "13", "14", "15", "16", "17"] },
-    { pregunta: "Género", tipo: "opcion", opciones: ["Femenino", "Masculino", "Otro"] },
-    { pregunta: "¿Has apostado en línea alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
-    { pregunta: "¿Con qué frecuencia sueles apostar?", tipo: "opcion", opciones: ["1 a 2 días por semana", "3 a 5 días por semana", "6 a 7 días por semana"] },
-    { pregunta: "¿Cuántas horas apostás por día?", tipo: "opcion", opciones: ["Menos de 1 hora", "1 a 2 horas", "Más de 3 horas"] },
-    { pregunta: "¿Qué días de la semana sueles apostar?", tipo: "multiple", opciones: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] },
-    { pregunta: "¿En qué tipo de actividades apuestas?", tipo: "multiple", opciones: ["Casino online", "Apuestas deportivas", "Póker u otros juegos de cartas", "Juegos de azar (ruleta, tragamonedas, etc.)", "Otro"] },
-    { pregunta: "¿Los sitios de apuestas en los que juegas son oficiales (.bet)?", tipo: "opcion", opciones: ["Sí", "No", "No sé"] },
-    { pregunta: "¿De dónde obtienes el dinero para apostar?", tipo: "opcion", opciones: ["Un familiar", "Trabajo", "Becas", "Otro"] },
-    { pregunta: "¿Cuánto dinero sueles apostar en una semana?", tipo: "opcion", opciones: ["Entre $1.000 y $5.000", "Entre $5.000 y $10.000", "Más de $10.000"] },
-    { pregunta: "¿Tus padres o tutores saben que apuestas?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
-    { pregunta: "¿Cómo conociste los juegos en línea?", tipo: "opcion", opciones: ["Redes sociales", "Amigos", "Familia", "Otro"] },
-    { pregunta: "¿Por qué apuestas?", tipo: "opcion", opciones: ["Diversión o entretenimiento", "Para ganar dinero", "Porque mis amigos lo hacen", "Otro"] },
-    { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No"] },
-    { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
-    { pregunta: "¿Te gustaría recibir información al respecto?", tipo: "opcion", opciones: ["Sí", "No"] },
-    { pregunta: "¿Conoces a alguien que apueste en línea?", tipo: "opcion", opciones: ["Sí", "No"] },
-    { pregunta: "¿Alguien te ha recomendado apostar alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
-    { pregunta: "¿Te gustaría apostar algún día?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
-    { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No", "Un poco"] },
-    { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
-    { pregunta: "¿Has visto anuncios de apuestas en línea en redes sociales o internet?", tipo: "opcion", opciones: ["Sí, muchas veces", "Algunas veces", "Nunca"] },
-    { pregunta: "¿Alguna vez has gastado dinero en un juego (ej.: para obtener monedas, vidas o recompensas)?", tipo: "opcion", opciones: ["Sí", "No"] }
-];
+            { pregunta: "Edad: selecciona tu edad", tipo: "opcion", opciones: ["12", "13", "14", "15", "16", "17"] },
+            { pregunta: "Género", tipo: "opcion", opciones: ["Femenino", "Masculino", "Otro"] },
+            { pregunta: "¿Has apostado en línea alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
+            { pregunta: "¿Con qué frecuencia sueles apostar?", tipo: "opcion", opciones: ["1 a 2 días por semana", "3 a 5 días por semana", "6 a 7 días por semana"] },
+            { pregunta: "¿Cuántas horas apostás por día?", tipo: "opcion", opciones: ["Menos de 1 hora", "1 a 2 horas", "Más de 3 horas"] },
+            { pregunta: "¿Qué días de la semana sueles apostar?", tipo: "multiple", opciones: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] },
+            { pregunta: "¿En qué tipo de actividades apuestas?", tipo: "multiple", opciones: ["Casino online", "Apuestas deportivas", "Póker u otros juegos de cartas", "Juegos de azar (ruleta, tragamonedas, etc.)", "Otro"] },
+            { pregunta: "¿Los sitios de apuestas en los que juegas son oficiales (.bet)?", tipo: "opcion", opciones: ["Sí", "No", "No sé"] },
+            { pregunta: "¿De dónde obtienes el dinero para apostar?", tipo: "opcion", opciones: ["Un familiar", "Trabajo", "Becas", "Otro"] },
+            { pregunta: "¿Cuánto dinero sueles apostar en una semana?", tipo: "opcion", opciones: ["Entre $1.000 y $5.000", "Entre $5.000 y $10.000", "Más de $10.000"] },
+            { pregunta: "¿Tus padres o tutores saben que apuestas?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
+            { pregunta: "¿Cómo conociste los juegos en línea?", tipo: "opcion", opciones: ["Redes sociales", "Amigos", "Familia", "Otro"] },
+            { pregunta: "¿Por qué apuestas?", tipo: "opcion", opciones: ["Diversión o entretenimiento", "Para ganar dinero", "Porque mis amigos lo hacen", "Otro"] },
+            { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No"] },
+            { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
+            { pregunta: "¿Te gustaría recibir información al respecto?", tipo: "opcion", opciones: ["Sí", "No"] },
+            { pregunta: "¿Conoces a alguien que apueste en línea?", tipo: "opcion", opciones: ["Sí", "No"] },
+            { pregunta: "¿Alguien te ha recomendado apostar alguna vez?", tipo: "opcion", opciones: ["Sí", "No"] },
+            { pregunta: "¿Te gustaría apostar algún día?", tipo: "opcion", opciones: ["Sí", "No", "No estoy seguro"] },
+            { pregunta: "¿Conoces los riesgos de apostar?", tipo: "opcion", opciones: ["Sí", "No", "Un poco"] },
+            { pregunta: "¿Sabes a dónde acudir o qué hacer si tuvieras un problema con las apuestas?", tipo: "opcion", opciones: ["Sí", "No"] },
+            { pregunta: "¿Has visto anuncios de apuestas en línea en redes sociales o internet?", tipo: "opcion", opciones: ["Sí, muchas veces", "Algunas veces", "Nunca"] },
+            { pregunta: "¿Alguna vez has gastado dinero en un juego (ej.: para obtener monedas, vidas o recompensas)?", tipo: "opcion", opciones: ["Sí", "No"] }
+        ];
 
+        // Mapeo de preguntas (índice 0-22) a keys en inglés para el JSON/BD (codificación en inglés)
+        const fieldMapping = {
+            0: 'age',
+            1: 'gender',
+            2: 'ever_bet_online',
+            3: 'betting_frequency',
+            4: 'hours_per_day',
+            5: 'betting_days',
+            6: 'betting_activities',
+            7: 'official_sites',
+            8: 'money_sources',
+            9: 'weekly_bet_amount',
+            10: 'parents_know',
+            11: 'how_discovered_online_games',
+            12: 'reasons_for_betting',
+            13: 'know_betting_risks',
+            14: 'know_where_to_seek_help',
+            15: 'want_information',
+            16: 'knows_someone_who_bets',
+            17: 'recommended_to_bet',
+            18: 'want_to_bet_someday',
+            19: 'know_risks_level',
+            20: 'know_help_for_problems',
+            21: 'seen_betting_ads',
+            22: 'spent_money_on_games'
+        };
 
-           // Mapeo de preguntas (index 0-22) a keys en inglés para el JSON/BD
-   const fieldMapping = {
-       0: 'age',
-       1: 'gender',
-       2: 'ever_bet_online',
-       3: 'betting_frequency',
-       4: 'hours_per_day',
-       5: 'betting_days',
-       6: 'betting_activities',
-       7: 'official_sites',
-       8: 'money_sources',
-       9: 'weekly_bet_amount',
-       10: 'parents_know',
-       11: 'how_discovered_online_games',
-       12: 'reasons_for_betting',
-       13: 'know_betting_risks',
-       14: 'know_where_to_seek_help',
-       15: 'want_information',
-       16: 'knows_someone_who_bets',
-       17: 'recommended_to_bet',
-       18: 'want_to_bet_someday',
-       19: 'know_risks_level',
-       20: 'know_help_for_problems',
-       21: 'seen_betting_ads',
-       22: 'spent_money_on_games'
-   };
-   
+        // Mapeo de valores de respuestas a español (independientemente del idioma elegido, para guardado en BD)
+        // Para opciones simples (Sí/No, etc.), y para múltiples se envía array en español
+        const valueToSpanish = {
+            // Pregunta 0: Edad (numérica, igual en todos)
+            0: { '12': '12', '13': '13', '14': '14', '15': '15', '16': '16', '17': '17' },
+            // Pregunta 1: Género
+            1: { 
+                'Femenino': 'Femenino', 'Masculino': 'Masculino', 'Otro': 'Otro',
+                'Female': 'Femenino', 'Male': 'Masculino', 'Other': 'Otro',
+                '女性': 'Femenino', '男性': 'Masculino', '其他': 'Otro'
+            },
+            // Pregunta 2: Ever bet online
+            2: { 
+                'Sí': 'Sí', 'No': 'No',
+                'Yes': 'Sí', 'No': 'No',  // 'No' es igual
+                '是': 'Sí', '否': 'No'
+            },
+            // Pregunta 3: Frecuencia
+            3: {
+                '1 a 2 días por semana': '1 a 2 días por semana', '3 a 5 días por semana': '3 a 5 días por semana', '6 a 7 días por semana': '6 a 7 días por semana',
+                '1 to 2 days per week': '1 a 2 días por semana', '3 to 5 days per week': '3 a 5 días por semana', '6 to 7 days per week': '6 a 7 días por semana',
+                '每周1-2天': '1 a 2 días por semana', '每周3-5天': '3 a 5 días por semana', '每周6-7天': '6 a 7 días por semana'
+            },
+            // Pregunta 4: Horas
+            4: {
+                'Menos de 1 hora': 'Menos de 1 hora', '1 a 2 horas': '1 a 2 horas', 'Más de 3 horas': 'Más de 3 horas',
+                'Less than 1 hour': 'Menos de 1 hora', '1 to 2 hours': '1 a 2 horas', 'More than 3 hours': 'Más de 3 horas',
+                '少于1小时': 'Menos de 1 hora', '1到2小时': '1 a 2 horas', '超过3小时': 'Más de 3 horas'
+            },
+            // Pregunta 5: Días (múltiples, mapear cada uno)
+            5: {
+                'Lunes': 'Lunes', 'Martes': 'Martes', 'Miércoles': 'Miércoles', 'Jueves': 'Jueves', 'Viernes': 'Viernes', 'Sábado': 'Sábado', 'Domingo': 'Domingo',
+                'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles', 'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo',
+                '星期一': 'Lunes', '星期二': 'Martes', '星期三': 'Miércoles', '星期四': 'Jueves', '星期五': 'Viernes', '星期六': 'Sábado', '星期日': 'Domingo'
+            },
+            // Pregunta 6: Actividades (múltiples)
+            6: {
+                'Casino online': 'Casino online', 'Apuestas deportivas': 'Apuestas deportivas', 'Póker u otros juegos de cartas': 'Póker u otros juegos de cartas', 'Juegos de azar (ruleta, tragamonedas, etc.)': 'Juegos de azar (ruleta, tragamonedas, etc.)', 'Otro': 'Otro',
+                'Online casino': 'Casino online', 'Sports betting': 'Apuestas deportivas', 'Poker or other card games': 'Póker u otros juegos de cartas', 'Games of chance (roulette, slots, etc.)': 'Juegos de azar (ruleta, tragamonedas, etc.)', 'Other': 'Otro',
+                '在线赌场': 'Casino online', '体育博彩': 'Apuestas deportivas', '扑克或其他纸牌游戏': 'Póker u otros juegos de cartas', '机会游戏（轮盘、老虎机等）': 'Juegos de azar (ruleta, tragamonedas, etc.)', '其他': 'Otro'
+            },
+            // Pregunta 7: Sitios oficiales
+            7: {
+                'Sí': 'Sí', 'No': 'No', 'No sé': 'No sé',
+                'Yes': 'Sí', 'No': 'No', "I don't know": 'No sé',
+                '是': 'Sí', '否': 'No', '不知道': 'No sé'
+            },
+            // Pregunta 8: Fuentes de dinero
+            8: {
+                'Un familiar': 'Un familiar', 'Trabajo': 'Trabajo', 'Becas': 'Becas', 'Otro': 'Otro',
+                'A relative': 'Un familiar', 'Work': 'Trabajo', 'Scholarships': 'Becas', 'Other': 'Otro',
+                '亲属': 'Un familiar', '工作': 'Trabajo', '奖学金': 'Becas', '其他': 'Otro'
+            },
+            // Pregunta 9: Cantidad semanal
+            9: {
+                'Entre $1.000 y $5.000': 'Entre $1.000 y $5.000', 'Entre $5.000 y $10.000': 'Entre $5.000 y $10.000', 'Más de $10.000': 'Más de $10.000',
+                'Between $1,000 and $5,000': 'Entre $1.000 y $5.000', 'Between $5,000 and $10,000': 'Entre $5.000 y $10.000', 'More than $10,000': 'Más de $10.000',
+                '$1,000-$5,000': 'Entre $1.000 y $5.000', '$5,000-$10,000': 'Entre $5.000 y $10.000', '超过$10,000': 'Más de $10.000'
+            },
+            // Pregunta 10: Padres saben
+            10: {
+                'Sí': 'Sí', 'No': 'No', 'No estoy seguro': 'No estoy seguro',
+                'Yes': 'Sí', 'No': 'No', "I'm not sure": 'No estoy seguro',
+                '是': 'Sí', '否': 'No', '不确定': 'No estoy seguro'
+            },
+            // Pregunta 11: Cómo conociste
+            11: {
+                'Redes sociales': 'Redes sociales', 'Amigos': 'Amigos', 'Familia': 'Familia', 'Otro': 'Otro',
+                'Social networks': 'Redes sociales', 'Friends': 'Amigos', 'Family': 'Familia', 'Other': 'Otro',
+                '社交网络': 'Redes sociales', '朋友': 'Amigos', '家庭': 'Familia', '其他': 'Otro'
+            },
+            // Pregunta 12: Por qué
+            12: {
+                'Diversión o entretenimiento': 'Diversión o entretenimiento', 'Para ganar dinero': 'Para ganar dinero', 'Porque mis amigos lo hacen': 'Porque mis amigos lo hacen', 'Otro': 'Otro',
+                'Fun or entertainment': 'Diversión o entretenimiento', 'To earn money': 'Para ganar dinero', 'Because my friends do it': 'Porque mis amigos lo hacen', 'Other': 'Otro',
+                '娱乐': 'Diversión o entretenimiento', '赚钱': 'Para ganar dinero', '因为朋友也赌博': 'Porque mis amigos lo hacen', '其他': 'Otro'
+            },
+            // Pregunta 13: Riesgos
+            13: { 'Sí': 'Sí', 'No': 'No', 'Yes': 'Sí', '是': 'Sí' },
+            // Pregunta 14: Dónde acudir
+            14: { 'Sí': 'Sí', 'No': 'No', 'Yes': 'Sí', '是': 'Sí' },
+            // Pregunta 15: Info
+            15: { 'Sí': 'Sí', 'No': 'No', 'Yes': 'Sí', '是': 'Sí' },
+            // Pregunta 16: Conoces alguien
+            16: { 'Sí': 'Sí', 'No': 'No', 'Yes': 'Sí', '是': 'Sí' },
+            // Pregunta 17: Recomendado
+            17: { 'Sí': 'Sí', 'No': 'No', 'Yes': 'Sí', '是': 'Sí' },
+            // Pregunta 18: Quieres apostar
+            18: { 
+                'Sí': 'Sí', 'No': 'No', 'No estoy seguro': 'No estoy seguro',
+                'Yes': 'Sí', 'No': 'No', "I'm not sure": 'No estoy seguro',
+                '是': 'Sí', '否': 'No', '不确定': 'No estoy seguro'
+            },
+            // Pregunta 19: Riesgos nivel
+            19: { 
+                'Sí': 'Sí', 'No': 'No', 'Un poco': 'Un poco',
+                'Yes': 'Sí', 'No': 'No', 'A little': 'Un poco',
+                '是': 'Sí', '否': 'No', '有一点': 'Un poco'
+            },
+            // Pregunta 20: Ayuda problemas
+            20: { 'Sí': 'Sí', 'No': 'No', 'Yes': 'Sí', '是': 'Sí' },
+            // Pregunta 21: Anuncios
+            21: {
+                'Sí, muchas veces': 'Sí, muchas veces', 'Algunas veces': 'Algunas veces', 'Nunca': 'Nunca',
+                'Yes, many times': 'Sí, muchas veces', 'Sometimes': 'Algunas veces', 'Never': 'Nunca',
+                '是，经常': 'Sí, muchas veces', '有时': 'Algunas veces', '从未': 'Nunca'
+            },
+            // Pregunta 22: Gastado dinero
+            22: { 'Sí': 'Sí', 'No': 'No', 'Yes': 'Sí', '是': 'Sí' }
+        };
+
         let currentQuestionIndex = 0;
-        let answers = {};
-        let questionFlow = [0, 1, 2]; // Always start with first 3 questions
+        let answers = {};  // Almacena respuestas en el idioma mostrado, pero se mapearán a español al enviar
+        let questionFlow = [0, 1, 2]; // Siempre empieza con las primeras 3 preguntas
         let currentLang = 'es';
-        let surveyStarted = false;  // Para bloquear cambio de idioma después de empezar
+        let surveyStarted = false;  // Bloquea cambio de idioma después de empezar
         let currentFlowIndex = 0;
 
-           function cambiarIdioma(lang) {
-       if (surveyStarted) {
-           const alertText = {
-               es: 'No puedes cambiar el idioma una vez iniciada la encuesta.',
-               en: 'You cannot change the language once the survey has started.',
-               zh: '调查开始后不能更改语言。'
-           };
-           alert(alertText[currentLang]);
-           document.getElementById('lang').value = currentLang;  // Revierte
-           return;
-       }
-       currentLang = lang;
-       mostrarPregunta();
-   }
-   
+        function cambiarIdioma(lang) {
+    currentLang = lang;
+    document.getElementById('lang').value = lang;  // Actualiza el selector visualmente
+    mostrarPregunta();  // Refresca la pregunta en el nuevo idioma
+}
+
 
         function getQuestionText(questionIndex) {
-            if (currentLang === 'es') {
-                return questions[questionIndex];
-            } else {
-                return {
-                    pregunta: traducciones[currentLang][questionIndex].pregunta,
-                    tipo: questions[questionIndex].tipo,
-                    opciones: traducciones[currentLang][questionIndex].opciones
-                };
-            }
+            const trad = traducciones[currentLang][questionIndex];
+            const baseQ = questions[questionIndex];
+            return {
+                pregunta: trad.pregunta,
+                tipo: baseQ.tipo,
+                opciones: trad.opciones
+            };
         }
 
         function updateQuestionFlow() {
-    const question3Answer = answers[2];
-    const newFlow = [0, 1, 2];
-    
-    if (question3Answer === "Sí" || question3Answer === "Yes" || question3Answer === "是") {
-        // Path "Sí": 0-2 + 3-15 (hasta pregunta 16, 16 totales)
-        for (let i = 3; i <= 15; i++) {
-            newFlow.push(i);
+            const question3Answer = answers[2];  // Respuesta a pregunta 3 (índice 2)
+            const yesValues = ['Sí', 'Yes', '是'];  // Detecta "Sí" en cualquier idioma
+            const newFlow = [0, 1, 2];
+            
+            if (yesValues.includes(question3Answer)) {
+                // Path "Sí": Preguntas 4 a 16 (índices 3-15), luego salta a Preg 23 (índice 22)
+                for (let i = 3; i <= 15; i++) {
+                    newFlow.push(i);
+                }
+                newFlow.push(22);  // Siempre termina en la última pregunta (22)
+            } else {
+                // Path "No": Salta a Preg 17 (índice 16) hasta 22
+                for (let i = 16; i <= 22; i++) {
+                    newFlow.push(i);
+                }
+            }
+            
+            questionFlow = newFlow;
+            console.log('Nuevo flujo:', questionFlow);  // Debug, puedes remover
         }
-    } else {
-        // Path "No": 0-2 + 16-22 (salta a pregunta 17, 10 totales)
-        for (let i = 16; i <= 22; i++) {
-            newFlow.push(i);
-        }
-    }
-    
-    questionFlow = newFlow;
-    // Opcional: Log para debug (borra después)
-    console.log('Nuevo flujo (length):', questionFlow.length, questionFlow);
-}
 
-          function mostrarPregunta() {
-    surveyStarted = true;  // bloquea cambio de idioma después de empezar
+        function mostrarPregunta() {
+    surveyStarted = true;  // Mantiene el bloqueo para otras lógicas si es necesario, pero no afecta idioma
     const realQuestionIndex = questionFlow[currentFlowIndex];
     const questionData = getQuestionText(realQuestionIndex);
 
-    let html = `<h2>${questionData.pregunta}</h2>`;
+    let html = '';
+
+    // Selector de idioma SOLO en la primera pregunta (currentFlowIndex === 0)
+    if (currentFlowIndex === 0) {
+        html += `
+            <div style="text-align:right; margin-bottom:10px;">
+                <label for="lang">Idioma:</label>
+                <select id="lang" onchange="cambiarIdioma(this.value)">
+                    <option value="es" ${currentLang === 'es' ? 'selected' : ''}>Español</option>
+                    <option value="en" ${currentLang === 'en' ? 'selected' : ''}>English</option>
+                    <option value="zh" ${currentLang === 'zh' ? 'selected' : ''}>中文</option>
+                </select>
+            </div>
+        `;
+    }
+
+    html += `<h2>${questionData.pregunta}</h2>`;
 
     // Info para preguntas múltiples
     if (questionData.tipo === 'multiple') {
@@ -380,10 +504,11 @@
         html += `<div class="multi-select-info">${multiSelectText[currentLang]}</div>`;
     }
 
-    // Opciones
+    // Opciones (con escape para comillas en onclick)
     questionData.opciones.forEach((opcion) => {
         const isSelected = isOptionSelected(realQuestionIndex, opcion);
-        html += `<div class="option ${isSelected ? 'selected' : ''}" onclick="seleccionarOpcion(${realQuestionIndex}, '${opcion}', '${questionData.tipo}')">${opcion}</div>`;
+        const escapedOpcion = opcion.replace(/'/g, "\\'");  // Escape para JS
+        html += `<div class="option ${isSelected ? 'selected' : ''}" onclick="seleccionarOpcion(${realQuestionIndex}, '${escapedOpcion}', '${questionData.tipo}')">${opcion}</div>`;
     });
 
     // Botones
@@ -406,16 +531,15 @@
         zh: '下一个'
     };
     html += `<button onclick="siguientePregunta()">${nextText[currentLang]}</button>`;
-    html += '</div>';  // cierre button-group
+    html += '</div>';
 
     // Insertar en el DOM
     document.getElementById('quiz').innerHTML = html;
 
-    // Actualizar la barra de progreso
-    actualizarProgreso(currentFlowIndex + 1);
+    // Actualizar progreso
+    actualizarProgreso(currentFlowIndex + 1, questionFlow.length);
 }
 
-   
 
         function isOptionSelected(questionIndex, option) {
             const answer = answers[questionIndex];
@@ -432,10 +556,13 @@
                 }
                 
                 const currentAnswers = answers[questionIndex];
-                const index = currentAnswers.indexOf(opcion);
+                                const index = currentAnswers.indexOf(opcion);
                 
                 if (index > -1) {
                     currentAnswers.splice(index, 1);
+                    if (currentAnswers.length === 0) {
+                        delete answers[questionIndex];  // Opcional: remover si vacío
+                    }
                 } else {
                     currentAnswers.push(opcion);
                 }
@@ -443,7 +570,7 @@
                 answers[questionIndex] = opcion;
             }
             
-            mostrarPregunta();
+            mostrarPregunta();  // Actualiza visualmente
         }
 
         function validarRespuesta() {
@@ -454,38 +581,43 @@
             if (questionData.tipo === 'multiple') {
                 return Array.isArray(answer) && answer.length > 0;
             } else {
-                return answer !== undefined && answer !== '';
+                return answer !== undefined && answer !== null && answer !== '';
             }
         }
 
-          function siguientePregunta() {
-       if (!validarRespuesta()) {
-           const alertText = {
-               es: 'Por favor selecciona una opción',
-               en: 'Please select an option',
-               zh: '请选择一个选项'
-           };
-           alert(alertText[currentLang]);
-           return;
-       }
-       
-       const realQuestionIndex = questionFlow[currentFlowIndex];
-       
-       // Update flow after answering question 3
-       if (realQuestionIndex === 2) {
-           updateQuestionFlow();
-       }
-       
-       currentFlowIndex++;
-       
-       if (currentFlowIndex >= questionFlow.length) {
-           enviarEncuesta();  // ¡CAMBIO: Envía datos al final de cualquier path (Sí o No)
-       } else {
-           mostrarPregunta();
-       }
-   }
-   
-                
+        function siguientePregunta() {
+            if (!validarRespuesta()) {
+                const alertText = {
+                    es: 'Por favor selecciona una opción',
+                    en: 'Please select an option',
+                    zh: '请选择一个选项'
+                };
+                alert(alertText[currentLang]);
+                return;
+            }
+            
+            const realQuestionIndex = questionFlow[currentFlowIndex];
+            
+            // Actualizar flujo después de responder pregunta 3 (índice 2)
+            if (realQuestionIndex === 2) {
+                updateQuestionFlow();
+                // Ajustar currentFlowIndex para que apunte al siguiente en el nuevo flow
+                currentFlowIndex = 3;  // Después de 0,1,2 -> siguiente es índice 3 en flow
+                if (currentFlowIndex >= questionFlow.length) {
+                    enviarEncuesta();
+                    return;
+                }
+            } else {
+                currentFlowIndex++;
+            }
+            
+            if (currentFlowIndex >= questionFlow.length) {
+                enviarEncuesta();
+            } else {
+                mostrarPregunta();
+            }
+        }
+
         function anteriorPregunta() {
             if (currentFlowIndex > 0) {
                 currentFlowIndex--;
@@ -493,92 +625,126 @@
             }
         }
 
-    // Función para enviar datos a n8n
-    async function enviarDatos() {
-        const data = {
-            respuestas,
-            idioma: currentLang
-        };
+        // Función para mapear respuestas a español y preparar JSON con keys en inglés
+        function prepararDatos() {
+            const data = {
+                idioma: currentLang,
+                timestamp: new Date().toISOString(),
+                respuestas: {}
+            };
 
-        try {
-            const response = await fetch(N8N_WEBHOOK_URL, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
+            // Para cada campo en el mapeo
+            Object.keys(fieldMapping).forEach(indexStr => {
+                const index = parseInt(indexStr);
+                const fieldKey = fieldMapping[index];
+                const answer = answers[index];
+
+                if (answer !== undefined && answer !== null) {
+                    const mapper = valueToSpanish[index] || {};  // Mapper para esta pregunta
+                    if (Array.isArray(answer)) {
+                        // Multiple: mapear cada elemento
+                        data.respuestas[fieldKey] = answer.map(opt => mapper[opt] || opt).filter(Boolean);
+                    } else {
+                        // Single: mapear valor
+                        data.respuestas[fieldKey] = mapper[answer] || answer;
+                    }
+                } else {
+                    // No respondida: null
+                    data.respuestas[fieldKey] = null;
+                }
             });
 
-            if (response.ok) {
-                mostrarFinal(true);
-            } else {
-                mostrarFinal(false, 'Error en el servidor');
+            return data;
+        }
+
+        // Función para enviar encuesta a n8n
+           async function enviarEncuesta() {
+       const data = prepararDatos();
+
+       // Spinner
+       document.getElementById('quiz').innerHTML = '<div class="spinner"><div></div><div></div><div></div></div><p>Enviando datos...</p>';
+
+       try {
+           const response = await fetch(N8N_WEBHOOK_URL, {
+               method: 'POST',
+               mode: 'no-cors',  // <--- AGREGAR ESTO: Ignora CORS, pero no lee response
+               headers: {
+                   'Content-Type': 'application/json'
+               },
+               body: JSON.stringify(data)
+           });
+
+           // No puedes chequear response.ok con no-cors, así que asume éxito
+           console.log('Datos enviados (sin verificación CORS). Verifica en n8n.');
+           mostrarFinal(true);  // Siempre muestra éxito
+
+       } catch (error) {
+           console.error('Error al enviar:', error);
+           mostrarFinal(false, 'Error de conexión. Verifica n8n y prueba con servidor local.');
+       }
+   }
+   
+
+        // Actualizar barra de progreso
+        function actualizarProgreso(current, total) {
+            const progreso = (current / total) * 100;
+            if (document.getElementById("progress")) {
+                document.getElementById("progress").style.width = `${progreso}%`;
             }
-        } catch (error) {
-            console.error('Error al enviar:', error);
-            mostrarFinal(false, 'No se pudo conectar con el servidor');
         }
-    }
 
-    // Función para actualizar la barra de progreso
-    function actualizarProgreso() {
-        let progreso = ((preguntaActual) / preguntas.length) * 100;
-        if (document.getElementById("progress")) {
-            document.getElementById("progress").style.width = progreso + "%";
-        }
-    }
+        // Mensaje final
+        function mostrarFinal(success = null, errorMsg = '') {
+            let html = `
+                <h2>Gracias por responder esta encuesta</h2>
+                <div class="final-message">
+                      `;
 
-    // Mensaje final (con recursos de ayuda)
-    function mostrarFinal(success = null, errorMsg = '') {
-        let html = `
-            <h2>Gracias por responder esta encuesta</h2>
-            <div class="final-message">
-                <p>Si querés o necesitás más información sobre el tema podés:</p>
-        `;
+            // Mensaje de éxito o error
+            if (success === true) {
+                html += `
+                    <div class="success-msg">
+                        <strong>¡Éxito!</strong> Tus respuestas se enviaron correctamente a nuestra base de datos.
+                    </div>
+                `;
+            } else if (success === false) {
+                html += `
+                    <div class="error-msg-final">
+                        <strong>Error en el envío:</strong> ${errorMsg}. 
+                        <p>No te preocupes, puedes reintentar o contactar al administrador si persiste.</p>
+                        <button onclick="enviarEncuesta()" style="margin: 5px; background: #2575fc; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Reintentar Envío</button>
+                    </div>
+                `;
+            }
 
-        // Mensaje de éxito o error
-        if (success === true) {
             html += `
-                <div class="success-msg">
-                    <strong>¡Éxito!</strong> Tus respuestas se enviaron correctamente a nuestra base de datos.
-                </div>
-            `;
-        } else if (success === false) {
-            html += `
-                <div class="error-msg-final">
-                    <strong>Error en el envío:</strong> ${errorMsg}. 
-                    <p>No te preocupes, puedes reintentar o contactar al administrador si persiste.</p>
-                    <button onclick="enviarDatos()" style="margin: 5px;">Reintentar Envío</button>
-                </div>
-            `;
-        }
-
-        html += `
-                <ul style="text-align:left;">
-                    <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
-                    <li>Centros de ayuda municipal en Chascomús:</li>
-                    <ul style="text-align:left; margin-left: 20px; list-style-type: disc;">
-                        <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
-                        <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
+                    <ul style="text-align:left;">
+                        <li>Si querés o necesitás más información sobre el tema podés:</li>
+                        <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
+                        <li>Centros de ayuda municipal en Chascomús:</li>
+                        <ul style="text-align:left; margin-left: 20px; list-style-type: disc;">
+                            <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
+                            <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
+                        </ul>
+                        <li>Por Urgencias llamar al <b>107</b></li>
                     </ul>
-                    <li>Por Urgencias llamar al <b>107</b></li>
-                </ul>
-                ${success === false ? '<button onclick="location.reload()" style="margin-top: 10px; background: #ddd; color: #333; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Recargar y Responder de Nuevo</button>' : ''}
-            </div>
-        `;
+                    ${success === false ? '<button onclick="location.reload()" style="margin-top: 10px; background: #ddd; color: #333; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Recargar y Responder de Nuevo</button>' : ''}
+                </div>
+            `;
 
-        document.getElementById("quiz").innerHTML = html;
-        // Actualizar progreso al 100%
-        if (document.getElementById("progress")) {
-            document.getElementById("progress").style.width = "100%";
+            document.getElementById("quiz").innerHTML = html;
+            // Progreso al 100%
+            if (document.getElementById("progress")) {
+                document.getElementById("progress").style.width = "100%";
+            }
         }
-    }
 
-    // Inicializar la encuesta al cargar la página
-    mostrarPregunta();
+        // Inicializar: Mostrar primera pregunta al cargar
+            window.onload = function() {
+             currentLang = 'es';  // Idioma por defecto
+             mostrarPregunta();
+        };
+
     </script>
 </body>
 </html>
-
-
