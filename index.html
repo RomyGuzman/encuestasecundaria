@@ -548,33 +548,51 @@ async function enviarEncuesta() {
         return;
     }
 
-    try {
+        try {
         const response = await fetch(N8N_WEBHOOK_URL, {
             method: 'POST',
-            mode: 'cors',  // Para cross-origin (GitHub a ngrok/server)
+            mode: 'cors',  // Para cross-origin (GitHub → ngrok/server)
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        if (result && (result.success || response.ok)) {
-            console.log('Éxito real:', result);
-            mostrarMensajeFinal(true);  // Éxito
+        if (response.ok) {
+            mostrarMensajeFinal(true);
         } else {
-            throw new Error('Respuesta del servidor no indica éxito');
+            mostrarMensajeFinal(false, 'Error al enviar los datos.');
         }
     } catch (error) {
-        console.error('Error al enviar:', error);
-        mostrarMensajeFinal(false, error.message);  // Error
+        console.error('Error en el envío:', error);
+        mostrarMensajeFinal(false, error.message);
     }
 }
 
+function mostrarMensajeFinal(success, errorMsg = '') {
+    let message = '';
+    if (success) {
+        const successText = {
+            es: '¡Gracias por participar en la encuesta!',
+            en: 'Thank you for participating in the survey!',
+            zh: '感谢您参加调查！'
+        };
+        message = `<div class="final-message"><h2>${successText[currentLang]}</h2></div>`;
+    } else {
+        const errorText = {
+            es: 'Hubo un error al enviar tus respuestas: ',
+            en: 'There was an error sending your responses: ',
+            zh: '发送您的回答时出错：'
+        };
+        message = `<div class="final-message"><h2>${errorText[currentLang]} ${errorMsg}</h2></div>`;
+    }
+
+    document.getElementById('quiz').innerHTML = message;
+    document.getElementById('progress').style.width = '100%';
+}
+
+// Inicia mostrando la primera pregunta
+mostrarPregunta();
    
            function mostrarMensajeFinal(success = null, errorMsg = '') {
        const finalMessages = {
@@ -638,9 +656,10 @@ async function enviarEncuesta() {
 
         // Initialize
         mostrarPregunta();
-    </script>
+</script>
 </body>
 </html>
+
 
 
 
