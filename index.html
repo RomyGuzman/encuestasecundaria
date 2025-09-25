@@ -395,7 +395,13 @@
            };
            html += `<button class="back-btn" onclick="anteriorPregunta()">${backText[currentLang]}</button>`;
        }
-       
+
+               function actualizarProgreso() {
+    const totalQuestions = questionFlow.length;
+    const currentProgress = ((currentFlowIndex + 1) / totalQuestions) * 100;
+    document.getElementById('progress').style.width = currentProgress + '%';
+}
+
        // Siempre botón "Siguiente" (envío automático al final del flow)
        const nextText = {
            es: 'Siguiente',
@@ -562,9 +568,11 @@ function mostrarFinal(success = null, errorMsg = '') {
 
 // Inicializa la encuesta
 mostrarPregunta();
+        
 </script>
 </body>
 </html>
+
 
 
 
