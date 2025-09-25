@@ -487,71 +487,18 @@
             }
         }
 
-         // Función para enviar datos al webhook de n8n (mapea a keys en inglés, preserva idioma)
+// Enviar respuestas a n8n
 async function enviarEncuesta() {
-    if (!validarRespuesta()) {
-        const alertText = {
-            es: 'Por favor selecciona una opción',
-            en: 'Please select an option',
-            zh: '请选择一个选项'
-        };
-        alert(alertText[currentLang]);
-        return;
-    }
-
-    // Mapear answers a JSON con keys en inglés (respuestas en idioma actual)
-    let data = { language: currentLang };  // Track idioma
-    const everBet = answers[2];  // Respuesta de pregunta 3 (para paths)
-    const noValues = {
-        es: 'No',
-        en: 'No',
-        zh: '否'
+    let data = {
+        language: currentLang,
+        responses: answers,
+        timestamp: new Date().toISOString()
     };
-    const yesValues = {
-        es: 'Sí',
-        en: 'Yes',
-        zh: '是'
-    };
-    const isNoPath = everBet === noValues[currentLang];
-    const isYesPath = everBet === yesValues[currentLang];
-    
-    for (let i = 0; i <= 22; i++) {  // 23 preguntas (0-22)
-        let englishKey = fieldMapping[i];
-        if (englishKey) {
-            if (isNoPath && i >= 3 && i <= 15) {
-                // Path "No": Nulls en 3-15
-                data[englishKey] = null;
-            } else if (isYesPath && i >= 16 && i <= 22) {
-                // Path "Sí": Nulls en 16-22
-                data[englishKey] = null;
-            } else {
-                // Llenar si respondida (o null si undefined)
-                let rawValue = answers[i];
-                if (rawValue === undefined) {
-                    data[englishKey] = null;
-                } else if (Array.isArray(rawValue)) {
-                    data[englishKey] = rawValue;  // Array para multiple
-                } else {
-                    data[englishKey] = rawValue || "";  // String en idioma actual
-                }
-            }
-        }
-    }
-    data.timestamp = new Date().toISOString();  // Timestamp
 
-    // Log para depuración (F12 Console)
-    console.log('JSON enviado (keys en inglés, respuestas en idioma):', data);
-
-    if (!N8N_WEBHOOK_URL) {
-        console.error('N8N_WEBHOOK_URL no configurada.');
-        mostrarMensajeFinal(false, 'URL no configurada.');  // Error simulado
-        return;
-    }
-
-        try {
+    try {
         const response = await fetch(N8N_WEBHOOK_URL, {
             method: 'POST',
-            mode: 'cors',  // Para cross-origin (GitHub → ngrok/server)
+            mode: 'cors',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -559,103 +506,62 @@ async function enviarEncuesta() {
         });
 
         if (response.ok) {
-            mostrarMensajeFinal(true);
+            mostrarFinal(true);
         } else {
-            mostrarMensajeFinal(false, 'Error al enviar los datos.');
+            mostrarFinal(false, 'Error en el servidor');
         }
     } catch (error) {
-        console.error('Error en el envío:', error);
-        mostrarMensajeFinal(false, error.message);
+        console.error('Error al enviar:', error);
+        mostrarFinal(false, 'No se pudo conectar con el servidor');
     }
 }
 
-function mostrarMensajeFinal(success, errorMsg = '') {
-    let message = '';
-    if (success) {
-        const successText = {
-            es: '¡Gracias por participar en la encuesta!',
-            en: 'Thank you for participating in the survey!',
-            zh: '感谢您参加调查！'
-        };
-        message = `<div class="final-message"><h2>${successText[currentLang]}</h2></div>`;
-    } else {
-        const errorText = {
-            es: 'Hubo un error al enviar tus respuestas: ',
-            en: 'There was an error sending your responses: ',
-            zh: '发送您的回答时出错：'
-        };
-        message = `<div class="final-message"><h2>${errorText[currentLang]} ${errorMsg}</h2></div>`;
+// Mensaje final (personalizado con recursos de ayuda)
+function mostrarFinal(success = null, errorMsg = '') {
+    let html = `
+        <h2>Gracias por responder esta encuesta</h2>
+        <div class="final-message">
+            <p>Si querés o necesitás más información sobre el tema podés:</p>
+    `;
+
+    if (success === true) {
+        html += `
+            <div class="success-msg">
+                <strong>¡Éxito!</strong> Tus respuestas se enviaron correctamente a nuestra base de datos.
+            </div>
+        `;
+    } else if (success === false) {
+        html += `
+            <div class="error-msg-final">
+                <strong>Error en el envío:</strong> ${errorMsg}. 
+                <p>No te preocupes, puedes reintentar o contactar al administrador si persiste.</p>
+                <button onclick="enviarEncuesta()" style="margin: 5px;">Reintentar Envío</button>
+            </div>
+        `;
     }
 
-    document.getElementById('quiz').innerHTML = message;
-    document.getElementById('progress').style.width = '100%';
+    html += `
+            <ul style="text-align:left;">
+                <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
+                <li>Centros de ayuda municipal en Chascomús:</li>
+                <ul style="text-align:left; margin-left: 20px; list-style-type: disc;">
+                    <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
+                    <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
+                </ul>
+                <li>Por Urgencias llamar al <b>107</b></li>
+            </ul>
+            ${success === false ? '<button onclick="location.reload()" style="margin-top: 10px; background: #ddd; color: #333; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Recargar y Responder de Nuevo</button>' : ''}
+        </div>
+    `;
+
+    document.getElementById("quiz").innerHTML = html;
+    if (document.getElementById("progress")) {
+        document.getElementById("progress").style.width = "100%";
+    }
 }
 
-// Inicia mostrando la primera pregunta
-mostrarPregunta();
-   
-           function mostrarMensajeFinal(success = null, errorMsg = '') {
-       const finalMessages = {
-           es: `
-               <h2>Gracias por responder esta encuesta</h2>
-               <div class="final-message">
-                   <p>Si querés o necesitás más información sobre el tema podés:</p>
-           `,
-           en: `
-               <h2>Thank you for answering this survey</h2>
-               <div class="final-message">
-                   <p>If you want or need more information about the topic you can:</p>
-           `,
-           zh: `
-               <h2>感谢您参与本次调查</h2>
-               <div class="final-message">
-                   <p>如需更多信息，请：</p>
-           `
-       };
-
-       let html = finalMessages[currentLang];
-
-       // Insertar mensaje de éxito o error
-       if (success === true) {
-           html += `
-               <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #c3e6cb;">
-                   <strong>¡Éxito!</strong> Tus respuestas se enviaron correctamente.
-               </div>
-           `;
-       } else if (success === false) {
-           html += `
-               <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #f5c6cb;">
-                   <strong>Error en el envío:</strong> ${errorMsg}. Puedes reintentar o contactar al administrador.
-                   <button onclick="enviarEncuesta()" style="margin: 5px; background: #2575fc; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Reintentar</button>
-               </div>
-           `;
-       }
-
-       html += `
-                   <ul style="text-align:left;">
-                       <li>Ingresar a <a href="https://www.saberjugar.gob.ar" target="_blank">https://www.saberjugar.gob.ar</a></li>
-                       <li>Centros de ayuda municipal en Chascomús:</li>
-                       <ul style="text-align:left; margin-left: 20px; list-style-type: disc;">
-                           <li>Centro de Día Chascomús, Dirección Carmona 36, Barrio 30 de Mayo, Tel: 02241-409070, Horarios de Atención de Lunes a Viernes de 08 a 14hs.</li>
-                           <li>Centro de Prevención de las Adicciones, Carmona 36, Barrio 30 de Mayo, Horarios de Atención de 09 a 14 hs, Tel: 02241-400278.</li>
-                       </ul>
-                       <li>Por Urgencias llamar al <b>107</b></li>
-                   </ul>
-                   ${success === false ? '<button onclick="location.reload()" style="margin-top: 10px; background: #ddd; color: #333; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;">Recargar y Responder de Nuevo</button>' : ''}
-               </div>
-           `;
-
-       document.getElementById('progress').style.width = '100%';
-       document.getElementById('quiz').innerHTML = html;
-   }
-   
-        function actualizarProgreso() {
-            const progreso = ((currentFlowIndex + 1) / questionFlow.length) * 100;
-            document.getElementById('progress').style.width = progreso + '%';
-        }
-
-        // Initialize
-        mostrarPregunta();
+// Inicializa la encuesta
+renderQuestion();
 </script>
 </body>
 </html>
