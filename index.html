@@ -363,53 +363,58 @@
     console.log('Nuevo flujo (length):', questionFlow.length, questionFlow);
 }
 
-           function mostrarPregunta() {
-       surveyStarted = true;
-       const realQuestionIndex = questionFlow[currentFlowIndex];
-       const questionData = getQuestionText(realQuestionIndex);
-       
-       let html = `<h2>${questionData.pregunta}</h2>`;
-       
-       // Show multi-select info for multiple choice questions
-       if (questionData.tipo === 'multiple') {
-           const multiSelectText = {
-               es: 'Puedes seleccionar múltiples opciones',
-               en: 'You can select multiple options',
-               zh: '您可以选择多个选项'
-           };
-           html += `<div class="multi-select-info">${multiSelectText[currentLang]}</div>`;
-       }
-       
-       questionData.opciones.forEach((opcion, i) => {
-           const isSelected = isOptionSelected(realQuestionIndex, opcion);
-           html += `<div class="option ${isSelected ? 'selected' : ''}" onclick="seleccionarOpcion(${realQuestionIndex}, '${opcion}', '${questionData.tipo}')">${opcion}</div>`;
-       });
-       
-       html += '<div class="button-group">';
-       
-       // Back button
-       if (currentFlowIndex > 0) {
-           const backText = {
-               es: 'Anterior',
-               en: 'Previous',
-               zh: '上一个'
-           };
-           html += `<button class="back-btn" onclick="anteriorPregunta()">${backText[currentLang]}</button>`;
-       }
+          function mostrarPregunta() {
+    surveyStarted = true;  // bloquea cambio de idioma después de empezar
+    const realQuestionIndex = questionFlow[currentFlowIndex];
+    const questionData = getQuestionText(realQuestionIndex);
 
-       // Siempre botón "Siguiente" (envío automático al final del flow)
-       const nextText = {
-           es: 'Siguiente',
-           en: 'Next',
-           zh: '下一个'
-       };
-       html += `<button onclick="siguientePregunta()">${nextText[currentLang]}</button>`;
-       
-       html += '</div>';  // Cierre del button-group (fuera del if)
-       
-       document.getElementById('quiz').innerHTML = html;
-       actualizarProgreso();
-   }
+    let html = `<h2>${questionData.pregunta}</h2>`;
+
+    // Info para preguntas múltiples
+    if (questionData.tipo === 'multiple') {
+        const multiSelectText = {
+            es: 'Puedes seleccionar múltiples opciones',
+            en: 'You can select multiple options',
+            zh: '您可以选择多个选项'
+        };
+        html += `<div class="multi-select-info">${multiSelectText[currentLang]}</div>`;
+    }
+
+    // Opciones
+    questionData.opciones.forEach((opcion) => {
+        const isSelected = isOptionSelected(realQuestionIndex, opcion);
+        html += `<div class="option ${isSelected ? 'selected' : ''}" onclick="seleccionarOpcion(${realQuestionIndex}, '${opcion}', '${questionData.tipo}')">${opcion}</div>`;
+    });
+
+    // Botones
+    html += '<div class="button-group">';
+    
+    // Botón "Anterior"
+    if (currentFlowIndex > 0) {
+        const backText = {
+            es: 'Anterior',
+            en: 'Previous',
+            zh: '上一个'
+        };
+        html += `<button class="back-btn" onclick="anteriorPregunta()">${backText[currentLang]}</button>`;
+    }
+
+    // Botón "Siguiente"
+    const nextText = {
+        es: 'Siguiente',
+        en: 'Next',
+        zh: '下一个'
+    };
+    html += `<button onclick="siguientePregunta()">${nextText[currentLang]}</button>`;
+    html += '</div>';  // cierre button-group
+
+    // Insertar en el DOM
+    document.getElementById('quiz').innerHTML = html;
+
+    // Actualizar la barra de progreso
+    actualizarProgreso(currentFlowIndex + 1);
+}
+
    
 
         function isOptionSelected(questionIndex, option) {
@@ -575,4 +580,5 @@
     </script>
 </body>
 </html>
+
 
